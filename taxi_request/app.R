@@ -43,7 +43,9 @@ ui <-
             fluidRow(
                 box(title = "Distance Monitor" %>% strong(),
                     width = 6,
-                    plotOutput("plot_distance")),
+                    plotOutput("plot_distance"),
+                    hr(),
+                    valueBoxOutput("box_outlier", width = 6)),
 
                 box(title = "Request Monitor" %>% strong(),
                     width = 6,
@@ -109,7 +111,7 @@ server <- shinyServer(function(input, output, session) {
 
     model_size <- 20000
     model_proportion <- model_size / nrow(data_raw)
-    model_prop_holdout  <- 1 - (model_prop_train * 3)
+    model_prop_holdout  <- 1 - (model_proportion * 3)
 
     model_data <-
         data_raw %>%
@@ -376,13 +378,6 @@ server <- shinyServer(function(input, output, session) {
                        radius = 200)
     })
 
-    # ---- Output: Outliers ----
-    value_outliers <- reactive({
-        data_stream_summary() %>%
-            summarise(obs_outliers = sum(outlier_sum) / sum(count)) %>%
-            mutate(exp_outliers = model_cluster_outlier,
-                   alert = obs_outliers > exp_outliers)
-    })
 
     # ---- Plot: Distance Distribution ----
     output$plot_distance <- renderPlot({
@@ -435,6 +430,20 @@ server <- shinyServer(function(input, output, session) {
     })
 
 
+    # ---- Box: Outlier Detection ----
+
+    value_outliers <- reactive({
+        data_stream_summary() %>%
+            summarise(obs_outliers = sum(outlier_sum) / sum(count)) %>%
+            mutate(exp_outliers = model_cluster_outlier,
+                   alert = obs_outliers > exp_outliers)
+    })
+
+    output$box_outlier <- renderValueBox({
+        valueBox(value = value_outliers()$obs_outliers %>% scales::percent(),
+                 subtitle = "Distance Outlier Detection",
+                 color = ifelse(value_outliers()$alert, "orange", "olive"))
+    })
 
     # ---- Distribution Plotly ----
     # output$plot_plotly <- renderPlotly({
