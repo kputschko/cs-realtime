@@ -261,7 +261,8 @@ server <- shinyServer(function(input, output, session) {
                           suffix = c(".point", ".center")) %>%
                 rowwise() %>%
                 mutate(distance = geosphere::distm(c(Lon.point, Lat.point),
-                                                   c(Lon.center, Lat.center))) %>%
+                                                   c(Lon.center, Lat.center)),
+                       minutes = distance / 671) %>%
                 ungroup() %>%
                 mutate(d_outlier = if_else(distance > (d_med + 2*d_iqr), 1, 0))
 
@@ -380,15 +381,16 @@ server <- shinyServer(function(input, output, session) {
 
 
     # ---- Plot: Distance Distribution ----
+    # Unit is in minutes.  Conversion is 1/671 meters per minute.  13,420 meters in 20 mins
     output$plot_distance <- renderPlot({
         data_stream() %>%
-            filter(!is.na(distance)) %>%
+            filter(!is.na(minutes)) %>%
             ggplot() +
-            aes(x = distance, y = Hub, fill = Hub) +
+            aes(x = minutes, y = Hub, fill = Hub) +
             ggridges::geom_density_ridges() +
-            scale_x_continuous(limits = c(0, 10000), labels = scales::unit_format(accuracy = 0.1, scale = 0.001, unit = "km")) +
+            scale_x_continuous(breaks = seq(0, 20, by = 5), limits = c(0, 20), labels = scales::unit_format(unit = "mins")) +
             ggridges::theme_ridges() +
-            labs(y = NULL, x = NULL, title = "Distribution of Request Distance from Hub") +
+            labs(y = NULL, x = NULL, title = "Time to Pickup, from Hub", caption = expression(italic("Assuming 25 MPH Average"))) +
             scale_fill_manual(values = model_cluster_summary %>% select(Hub, Color) %>% deframe(),
                               guide = guide_legend(title.position = "top")) +
             theme(legend.position = "bottom", legend.justification = "center")
