@@ -390,7 +390,7 @@ server <- shinyServer(function(input, output, session) {
             ggridges::geom_density_ridges() +
             scale_x_continuous(breaks = seq(0, 20, by = 5), limits = c(0, 20), labels = scales::unit_format(unit = "mins")) +
             ggridges::theme_ridges() +
-            labs(y = NULL, x = NULL, title = "Time to Pickup, from Hub", caption = expression(italic("Assuming 25 MPH Average"))) +
+            labs(y = NULL, x = NULL, title = "Time to Pickup (at 25 MPH)") +
             scale_fill_manual(values = model_cluster_summary %>% select(Hub, Color) %>% deframe(),
                               guide = guide_legend(title.position = "top")) +
             theme(legend.position = "bottom", legend.justification = "center")
