@@ -16,38 +16,38 @@ data_raw <-
 # Testing - End Points ----------------------------------------------------
 # Build the process to randomly assign end points
 
-n <- 20000
-
-data_start <-
-  data_raw %>%
-  sample_n(n) %>%
-  rename(start_lat = Lat, start_lon = Lon) %>%
-  print()
-
-data_end <-
-  data_raw %>%
-  sample_n(n) %>%
-  rename(end_lat = Lat, end_lon = Lon) %>%
-  print()
-
-data_start_end <-
-  data_start %>%
-  bind_cols(data_end) %>%
-  rowwise() %>%
-  mutate(distance = distm(c(start_lon, start_lat), c(end_lon, end_lat))) %>%
-  print()
-
-
-data_start_end %>%
-  filter(distance < 30000,
-         distance > 500) %>%
-
-  ggplot(aes(x = distance)) +
-  geom_histogram(binwidth = 1000, color = "black", fill = "gray90") +
-  scale_y_sqrt("sqrt(count)") +
-  scale_x_continuous(labels = scales::unit_format(scale = 1/1000, unit = "km")) +
-  labs(title = "Randomly Assigned End Point", subtitle = "Histogram Bins of 2km") +
-  theme_minimal()
+# n <- 20000
+#
+# data_start <-
+#   data_raw %>%
+#   sample_n(n) %>%
+#   rename(start_lat = Lat, start_lon = Lon) %>%
+#   print()
+#
+# data_end <-
+#   data_raw %>%
+#   sample_n(n) %>%
+#   rename(end_lat = Lat, end_lon = Lon) %>%
+#   print()
+#
+# data_start_end <-
+#   data_start %>%
+#   bind_cols(data_end) %>%
+#   rowwise() %>%
+#   mutate(distance_trip = distm(c(start_lon, start_lat), c(end_lon, end_lat))) %>%
+#   print()
+#
+#
+# data_start_end %>%
+#   filter(distance_trip < 30000,
+#          distance_trip > 500) %>%
+#
+#   ggplot(aes(x = distance_trip)) +
+#   geom_histogram(binwidth = 1000, color = "black", fill = "gray90") +
+#   scale_y_sqrt("sqrt(count)") +
+#   scale_x_continuous(labels = scales::unit_format(scale = 1/1000, unit = "km")) +
+#   labs(title = "Randomly Assigned End Point", subtitle = "Histogram Bins of 2km") +
+#   theme_minimal()
 
 
 # Actual Start + End Points -----------------------------------------------
@@ -70,7 +70,7 @@ data_combine <-
   data_start %>%
   bind_cols(data_end) %>%
   rowwise() %>%
-  mutate(distance = distm(c(start_lon, start_lat), c(end_lon, end_lat))) %>%
+  mutate(distance_trip = distm(c(start_lon, start_lat), c(end_lon, end_lat))) %>%
   ungroup() %>%
   print()
 
@@ -78,18 +78,18 @@ data_combine <-
 # data_filter <-
 #   data_combine %>%
 #   ungroup() %>%
-#   mutate(rank = dplyr::percent_rank(distance),
-#          group = cut(distance, quantile(distance, probs = seq(0, 1, by = 0.05)), labels = FALSE)) %>%
+#   mutate(rank = dplyr::percent_rank(distance_trip),
+#          group = cut(distance_trip, quantile(distance_trip, probs = seq(0, 1, by = 0.05)), labels = FALSE)) %>%
 #   print()
-# data_filter %>% filter(rank < 0.05) %>% summarise(max(distance))
-# data_filter %>% filter(rank > 0.95) %>% summarise(min(distance))
-# data_filter %>% filter(group == 1) %>% summarise(max(distance))
-# data_filter %>% filter(group == 20) %>% summarise(min(distance))
+# data_filter %>% filter(rank < 0.05) %>% summarise(max(distance_trip))
+# data_filter %>% filter(rank > 0.95) %>% summarise(min(distance_trip))
+# data_filter %>% filter(group == 1) %>% summarise(max(distance_trip))
+# data_filter %>% filter(group == 20) %>% summarise(min(distance_trip))
 
 data_filter <-
   data_combine %>%
   ungroup() %>%
-  mutate(group = cut(distance, quantile(distance, probs = seq(0, 1, by = 0.05)), labels = FALSE)) %>%
+  mutate(group = cut(distance_trip, quantile(distance_trip, probs = seq(0, 1, by = 0.05)), labels = FALSE)) %>%
   filter(group != 1, group != 20) %>%
   select(-group) %>%
   arrange(datetime) %>%
@@ -99,7 +99,7 @@ data_filter <-
 # Plot - Final Start + End ------------------------------------------------
 
 data_filter %>%
-  ggplot(aes(x = distance)) +
+  ggplot(aes(x = distance_trip)) +
   geom_histogram(binwidth = 1000, color = "black", fill = "gray90") +
   scale_y_sqrt("sqrt(count)") +
   scale_x_continuous(labels = scales::unit_format(scale = 1/1000, unit = "km")) +
@@ -116,11 +116,12 @@ map_hours <-
       night = c(0:6, 22, 23)) %>%
   enframe("hour_label", "hour") %>%
   unnest() %>%
-  arrange(hour)
+  arrange(hour) %>%
+  mutate_all(factor)
 
 
 # --- Export labels
-write_csv(map_hours, "data/hour_labels.csv")
+write_rds(map_hours, "data/hour_labels.rds")
 
 
 # --- Deconstruct date/time column and convert to factor
@@ -141,7 +142,7 @@ data_tidy <-
 # Export directly to 'data' folder
 
 data_tidy %>%
-  modelr::resample_partition(c(train = 0.10, test = 0.10, live = 0.10, holdout = 0.70)) %>%
+  modelr::resample_partition(c(train = 0.15, test = 0.15, live = 0.15, holdout = 0.55)) %>%
   enframe() %>%
   slice(-4) %>%
   mutate(path = str_glue("data/{name}.rds")) %>%

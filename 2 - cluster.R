@@ -7,7 +7,6 @@ pacman::p_load(tidyverse, h2o, leaflet, RColorBrewer)
 # Load Data ---------------------------------------------------------------
 
 data_train <- read_rds("data/train.rds")
-data_hours <- read_csv("data/hour_labels.csv")
 
 
 # H2O ---------------------------------------------------------------------
@@ -40,7 +39,7 @@ model_cluster_summary <-
   rename(center_lat = start_lat, center_lon = start_lon) %>%
   select(-within_cluster_sum_of_squares) %>%
   arrange(-size) %>%
-  mutate(hub = LETTERS[centroid],
+  mutate(hub = LETTERS[sequence(n())] %>% factor(),
          prop = size / sum(size),
          hub_color = brewer.pal(n(), "Set1")) %>%
   print()
@@ -64,7 +63,7 @@ model_cluster_summary %>%
 
 # Export - Cluster --------------------------------------------------------
 
-model_cluster_summary %>% write_csv("data/model_cluster_summary.csv")
+model_cluster_summary %>% write_rds("data/model_cluster_summary.rds")
 
 h2o.saveModel(model_cluster, "data/model_cluster", force = TRUE)
 
