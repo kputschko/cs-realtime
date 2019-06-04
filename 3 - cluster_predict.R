@@ -46,8 +46,9 @@ data_assignment <-
 
 data_cost <-
   data_assignment %>%
-  mutate(cost_expense = 0.25 * distance_hub / 1000,
+  mutate(cost_expense = 0.25 * (distance_trip + distance_hub) / 1000,
          cost_revenue = 2 + 0.75 * distance_trip / 1000,
+         cost_profit = cost_revenue - cost_expense,
          time_trip = distance_trip / 670.5,
          time_hub = distance_hub / 670.5) %>%
   select(year, month, day, weekday, hour, hour_label, hub,

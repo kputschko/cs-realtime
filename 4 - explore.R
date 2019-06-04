@@ -35,7 +35,7 @@ fx_vlookup <- function(data, match_value, match_column, return_value) {
 # Import ------------------------------------------------------------------
 
 data_cost <- read_rds("data/test_cost.rds")
-data_clusters <- read_csv("data/model_cluster_summary.csv")
+data_clusters <- read_rds("data/model_cluster_summary.rds")
 
 
 # Data Center -------------------------------------------------------------
