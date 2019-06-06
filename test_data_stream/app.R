@@ -226,28 +226,48 @@ ui <- dashboardPage(
         tags$style(type = "text/css", ".recalculating {opacity: 1.0;}"),
 
         fluidRow(
-            box(title = "Samples" %>% strong(),
-                width = 12,
-                textOutput("counter"),
-                hr(),
-                leafletOutput("map"),
-                hr(),
-                plotOutput("hub_rides"),
-                hr(),
-                plotOutput("hub_fees"),
-                hr(),
-                plotOutput("hub_profit"),
-                hr(),
-                tableOutput("single"),
-                hr(),
-                tableOutput("data_monitor"),
-                hr(),
-                tableOutput("total"),
-                hr()
-            )
+            box(title = "Live Requests" %>% strong(),
+                width = 6,
+                leafletOutput("map")),
+            box(title = "Fare per Mile" %>% strong(),
+                footer = "Higher fees attract more drivers, while lower fees push drivers into other areas" %>% em(),
+                width = 4,
+                plotOutput("hub_fees"))
+            ),
+
+        fluidRow(
+            box(title = "Request Volume by Hour" %>% strong(),
+                footer = "The vertical bars represent the Normal range of Request Volume" %>% em(),
+                width = 5,
+                plotOutput("hub_rides")),
+            box(title = "Driver's Profit per Request" %>% strong(),
+                footer = "Box height is determined by number of requests" %>% em(),
+                width = 5,
+                plotOutput("hub_profit"))
         )
-    )
-)
+
+        # , fluidRow(
+        #     box(title = "Samples" %>% strong(),
+        #         width = 12,
+        #         textOutput("counter"),
+        #         hr(),
+        #         leafletOutput("map"),
+        #         hr(),
+        #         plotOutput("hub_rides"),
+        #         hr(),
+        #         plotOutput("hub_fees"),
+        #         hr(),
+        #         plotOutput("hub_profit"),
+        #         hr(),
+        #         tableOutput("single"),
+        #         hr(),
+        #         tableOutput("data_monitor"),
+        #         hr(),
+        #         tableOutput("total"),
+        #         hr()))
+
+        ) # Close UI Body
+) # Close UI
 
 
 # Server ------------------------------------------------------------------
@@ -311,9 +331,8 @@ server <- function(input, output, session) {
                               drop = FALSE,
                               name = NULL,
                               guide = guide_legend(title.position = "top")) +
-            labs(title = "Request Volume by Hour", y = "Number of Requests", x = NULL,
-                 subtitle = str_c("Hour - ", vals$time$hour %>% str_pad(2, side = "left", pad = "0"), ":00"),
-                 caption = "The vertical bars represent the Normal range of Request Volume") +
+            labs(y = "Number of Requests", x = NULL,
+                 title = str_c("Hour - ", vals$time$hour %>% str_pad(2, side = "left", pad = "0"), ":00")) +
             theme_minimal() +
             theme(legend.position = "bottom", legend.justification = "center")
     })
@@ -336,9 +355,7 @@ server <- function(input, output, session) {
                               name = NULL,
                               guide = "none") +
             theme_no_axes(base.theme = theme_minimal()) +
-            labs(title = "Request Fee per Mile",
-                 subtitle = "Fees are adjusted based on hub request volume",
-                 caption = "Higher fees attract more drivers, while lower fees push drivers into other areas")
+            labs(title = "Fees are adjusted based on hub request volume")
     })
 
     # | Plot Profit ----
@@ -352,7 +369,7 @@ server <- function(input, output, session) {
             scale_fill_manual(values = clusters %>% select(hub, hub_color) %>% deframe(),
                               guide = "none") +
             theme_minimal() +
-            labs(x = "Hub", y = NULL, title = "Driver's Profit per Request", caption = "Box height is determined by number of requests")
+            labs(x = "Hub", y = NULL)
 
     })
 
